@@ -1,0 +1,45 @@
+# Docker Compose para ambiente de desenvolvimento
+# Configura PostgreSQL e Redis necessários para a aplicação
+
+version: '3.8'
+
+services:
+  # Banco de dados PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: nexus-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nexus
+      POSTGRES_PASSWORD: nexus123
+      POSTGRES_DB: nexus_wallet
+    ports:
+      - "5432:5432" # Porta exposta para acesso local
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persistência dos dados
+    networks:
+      - nexus-network
+
+  # Redis para cache e rate limiting
+  redis:
+    image: redis:7-alpine
+    container_name: nexus-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - nexus-network
+
+# Volumes para persistência de dados
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# Rede para comunicação entre containers
+networks:
+  nexus-network:
+    driver: bridge
