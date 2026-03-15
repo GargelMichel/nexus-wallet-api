@@ -1,0 +1,93 @@
+// Schema do Prisma para o sistema de carteira de criptomoedas
+// Define todos os modelos (tabelas) do banco de dados PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo de Usuário
+// Armazena informações de autenticação e identificação do usuário
+model User {
+  id        String   @id @default(uuid()) // ID único gerado automaticamente
+  email     String   @unique // Email único para login
+  password  String   // Senha criptografada com bcrypt
+  name      String   // Nome completo do usuário
+  createdAt DateTime @default(now()) // Data de criação da conta
+  updatedAt DateTime @updatedAt // Data da última atualização
+
+  // Relacionamentos
+  wallets      Wallet[]      // Um usuário pode ter múltiplas carteiras (uma por cripto)
+  ledgerEntries LedgerEntry[] // Histórico de todas as transações do usuário
+  deposits     Deposit[]     // Depósitos recebidos pelo usuário
+
+  @@map("users") // Nome da tabela no banco de dados
+}
+
+// Modelo de Carteira
+// Armazena o saldo de cada criptomoeda para cada usuário
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   // Referência ao usuário dono da carteira
+  currency  String   // Código da criptomoeda (BTC, ETH, USDT, etc.)
+  balance   Decimal  @default(0) @db.Decimal(20, 8) // Saldo com 8 casas decimais
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Índices para melhorar performance de consultas
+  @@unique([userId, currency]) // Um usuário não pode ter duas carteiras da mesma moeda
+  @@index([userId]) // Índice para buscar carteiras por usuário rapidamente
+  @@map("wallets")
+}
+
+// Modelo de Entrada no Ledger (Livro-Razão)
+// Registra TODAS as movimentações financeiras para auditoria
+// Cada transação gera uma ou mais entradas no ledger
+model LedgerEntry {
+  id              String   @id @default(uuid())
+  userId          String   // Usuário relacionado à transação
+  transactionType String   // Tipo: DEPOSIT, WITHDRAWAL, SWAP_IN, SWAP_OUT, FEE
+  currency        String   // Moeda envolvida na transação
+  amount          Decimal  @db.Decimal(20, 8) // Valor (positivo ou negativo)
+  balanceBefore   Decimal  @db.Decimal(20, 8) // Saldo antes da transação (para auditoria)
+  balanceAfter    Decimal  @db.Decimal(20, 8) // Saldo depois da transação (para auditoria)
+  metadata        Json?    // Dados adicionais em JSON (ex: taxa, moeda de destino em swap)
+  createdAt       DateTime @default(now())
+
+  // Relacionamentos
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId]) // Buscar histórico por usuário
+  @@index([transactionType]) // Filtrar por tipo de transação
+  @@index([createdAt]) // Ordenar por data
+  @@map("ledger_entries")
+}
+
+// Modelo de Depósito
+// Armazena depósitos recebidos via webhook
+// Implementa idempotência para evitar processar o mesmo depósito duas vezes
+model Deposit {
+  id              String   @id @default(uuid())
+  userId          String   // Usuário que recebeu o depósito
+  externalId      String   @unique // ID externo do depósito (para idempotência)
+  currency        String   // Moeda depositada
+  amount          Decimal  @db.Decimal(20, 8) // Valor depositado
+  status          String   @default("PENDING") // PENDING, PROCESSED, FAILED
+  processedAt     DateTime? // Data de processamento
+  createdAt       DateTime @default(now())
+
+  // Relacionamentos
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([externalId]) // Buscar rapidamente por ID externo
+  @@index([userId])
+  @@index([status])
+  @@map("deposits")
+}
