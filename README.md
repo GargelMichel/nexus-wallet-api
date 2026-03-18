@@ -19,7 +19,6 @@ Candidato: Michel Gargel
 - [Como Rodar o Projeto](#como-rodar-o-projeto)
 - [Endpoints da API](#endpoints-da-api)
 - [Estrutura de Pastas](#estrutura-de-pastas)
-- [Commits Sugeridos](#commits-sugeridos)
 - [Testes](#testes)
 - [Melhorias Futuras](#melhorias-futuras)
 
@@ -39,6 +38,14 @@ A aplicação permite que usuários:
 Todos os movimentos financeiros são registrados em um **sistema de ledger** (livro-razão) para auditoria completa.
 
 ---
+
+## Notas sobre o desenvolvimento
+
+- Alguns commits intermediários foram agrupados por otimização de tempo durante o desenvolvimento.
+- O controller de autenticação foi adicionado posteriormente para completar o fluxo.
+- Todo o projeto 100% finalizado
+
+
 
 ##  Tecnologias Utilizadas
 
@@ -89,7 +96,7 @@ Todos os movimentos financeiros são registrados em um **sistema de ledger** (li
 
 ---
 
-## 🎯 Melhorias Implementadas
+##  Melhorias Implementadas
 
 Além dos requisitos obrigatórios, implementei as seguintes melhorias:
 
@@ -475,6 +482,20 @@ nexus-backend/
 ```
 
 ---
+##  Testes
+
+```bash
+# Executar testes unitários
+npm run test
+
+# Executar testes com coverage
+npm run test:cov
+
+# Executar testes e2e
+npm run test:e2e
+```
+
+**Nota:** Testes básicos podem ser implementados futuramente. A arquitetura modular facilita a criação de testes.
 ---
 
 ## Melhorias Futuras
